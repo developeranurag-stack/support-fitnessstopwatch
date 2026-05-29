@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fitness Stopwatch & Interval Timer — Precision Athletic Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1318;
+    --bg3: #141920;
+    --card: #161d26;
+    --border: #1e2a38;
+    --accent: #00e5ff;
+    --accent2: #ff3d5a;
+    --accent3: #b8ff57;
+    --text: #e8edf2;
+    --muted: #6b7d8f;
+    --white: #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: .4;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(10,12,15,.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+    gap: 60px;
+  }
+
+  /* animated grid bg */
+  #hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridShift 20s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes gridShift {
+    0% { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,229,255,.1);
+    border: 1px solid rgba(0,229,255,.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 28px;
+    animation: fadeUp .7s ease both;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .4; transform: scale(1.4); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 7vw, 96px);
+    line-height: .92;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+    animation: fadeUp .7s .15s ease both;
+  }
+
+  h1 span { color: var(--accent); }
+  h1 .red { color: var(--accent2); }
+
+  .hero-desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #8fa3b8;
+    max-width: 480px;
+    margin-bottom: 40px;
+    animation: fadeUp .7s .3s ease both;
+  }
+
+  .hero-actions {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    animation: fadeUp .7s .45s ease both;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 0 30px rgba(0,229,255,.25);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(0,229,255,.45);
+  }
+
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: border-color .2s, color .2s;
+    background: transparent;
+    cursor: pointer;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── PHONE MOCKUP ─── */
+  .hero-visual { position: relative; z-index: 2; display: flex; justify-content: center; align-items: center; }
+
+  .phone-wrap {
+    position: relative;
+    animation: floatPhone 4s ease-in-out infinite;
+  }
+
+  @keyframes floatPhone {
+    0%,100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-18px) rotate(-2deg); }
+  }
+
+  .phone-frame {
+    width: 280px;
+    background: #0d1117;
+    border: 2px solid #2a3a4a;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow:
+      0 0 0 1px #1e2a38,
+      0 40px 80px rgba(0,0,0,.8),
+      0 0 120px rgba(0,229,255,.08);
+    position: relative;
+  }
+
+  .phone-screen {
+    background: #111820;
+    border-radius: 30px;
+    overflow: hidden;
+    aspect-ratio: 9/19.5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    gap: 18px;
+    position: relative;
+  }
+
+  .phone-screen::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .timer-ring {
+    width: 140px; height: 140px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .timer-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+
+  .ring-bg { fill: none; stroke: #1a2433; stroke-width: 8; }
+  .ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 408;
+    stroke-dashoffset: 100;
+    filter: drop-shadow(0 0 6px var(--accent));
+    animation: ringAnim 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes ringAnim {
+    from { stroke-dashoffset: 80; }
+    to { stroke-dashoffset: 280; }
+  }
+
+  .ring-fill-red {
+    fill: none;
+    stroke: var(--accent2);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 408;
+    stroke-dashoffset: 300;
+    filter: drop-shadow(0 0 4px var(--accent2));
+  }
+
+  .timer-digits {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 2px;
+    color: var(--white);
+    position: relative;
+    z-index: 1;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: .7; }
+  }
+
+  .phone-phase-badge {
+    background: var(--accent2);
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+
+  .phone-stats {
+    display: flex; gap: 20px; width: 100%;
+  }
+
+  .phone-stat {
+    flex: 1;
+    background: #0d151e;
+    border: 1px solid #1e2a38;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .phone-stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent3);
+  }
+
+  .phone-stat-lbl {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .phone-controls {
+    display: flex; gap: 12px;
+  }
+
+  .phone-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .phone-btn-main {
+    background: var(--accent);
+    color: #000;
+    font-size: 20px;
+    width: 52px; height: 52px;
+    box-shadow: 0 0 20px rgba(0,229,255,.4);
+  }
+
+  .phone-btn-sec {
+    background: #1a2433;
+    border: 1px solid #2a3a4a;
+    color: var(--muted);
+  }
+
+  /* glow orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .orb1 { width: 400px; height: 400px; background: rgba(0,229,255,.06); top: -100px; right: -80px; }
+  .orb2 { width: 300px; height: 300px; background: rgba(255,61,90,.05); bottom: 0; left: -60px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTIONS COMMON ─── */
+  section { padding: 100px 48px; position: relative; z-index: 1; }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .section-divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    margin-bottom: 40px;
+  }
+
+  /* ─── FEATURES ─── */
+  #features { background: var(--bg2); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2px;
+    margin-top: 60px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .feature-card {
+    background: var(--card);
+    padding: 40px 32px;
+    position: relative;
+    transition: background .3s;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .3s;
+  }
+
+  .feature-card:hover { background: #1a2230; }
+  .feature-card:hover::before { transform: scaleX(1); }
+
+  .feature-icon {
+    font-size: 36px;
+    margin-bottom: 20px;
+    display: block;
+    filter: grayscale(0);
+  }
+
+  .feature-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: var(--white);
+  }
+
+  .feature-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .feature-tag {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+
+  .tag-cyan { color: var(--accent); border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.05); }
+  .tag-red { color: var(--accent2); border-color: rgba(255,61,90,.3); background: rgba(255,61,90,.05); }
+  .tag-green { color: var(--accent3); border-color: rgba(184,255,87,.3); background: rgba(184,255,87,.05); }
+
+  /* ─── STATS STRIP ─── */
+  #stats {
+    background: var(--bg);
+    padding: 60px 48px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .stat-item {
+    background: var(--bg);
+    padding: 40px 32px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+
+  .stat-unit {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    opacity: .6;
+  }
+
+  .stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ─── HOW IT WORKS ─── */
+  #how { background: var(--bg3); }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-top: 60px;
+    position: relative;
+  }
+
+  .steps-grid::before {
+    content: '';
+    position: absolute;
+    top: 32px; left: 16.6%; right: 16.6%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), var(--accent), var(--border), transparent);
+  }
+
+  .step-card {
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .step-num {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(0,229,255,.2);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .step-desc { font-size: 14px; line-height: 1.7; color: var(--muted); }
+
+  /* ─── SUPPORT ─── */
+  #support { background: var(--bg2); }
+
+  .support-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 60px;
+  }
+
+  .support-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, box-shadow .3s;
+  }
+
+  .support-card:hover {
+    border-color: rgba(0,229,255,.3);
+    box-shadow: 0 0 40px rgba(0,229,255,.07);
+  }
+
+  .support-card-glow {
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    filter: blur(60px);
+    top: -60px; right: -60px;
+    pointer-events: none;
+  }
+
+  .support-icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .support-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .support-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  /* UPI block */
+  .upi-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .upi-id {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--accent3);
+    font-weight: 600;
+  }
+
+  .upi-copy {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all .2s;
+  }
+  .upi-copy:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* QR placeholder */
+  .qr-box {
+    width: 120px; height: 120px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .qr-box svg { width: 100px; height: 100px; }
+
+  .qr-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+
+  .qr-text h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .qr-text p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ─── CONTACT ─── */
+  #contact { background: var(--bg); }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .contact-info h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .contact-info p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .contact-email {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: var(--accent);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    transition: border-color .2s;
+  }
+  .contact-email:hover { border-color: var(--accent); }
+
+  .contact-form-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+  }
+
+  .form-group { margin-bottom: 20px; }
+
+  .form-group label {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+    resize: vertical;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--accent); }
+
+  .form-group select option { background: var(--bg); }
+
+  .form-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+  }
+  .form-submit:hover { opacity: .9; transform: translateY(-1px); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+    position: relative; z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .footer-text {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .footer-links {
+    display: flex; gap: 24px; list-style: none;
+  }
+
+  .footer-links a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+
+  /* ─── DONATION MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 90%; max-width: 480px;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform .3s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute; top: 20px; right: 20px;
+    background: none; border: none;
+    color: var(--muted); font-size: 24px;
+    cursor: pointer; line-height: 1;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--white); }
+
+  .modal h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .modal p { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+  .modal-tabs {
+    display: flex; gap: 0;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+  }
+
+  .modal-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: all .2s;
+    border: none;
+    background: none;
+  }
+
+  .modal-tab.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .razorpay-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    padding: 16px;
+    background: #3395ff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: opacity .2s;
+  }
+  .razorpay-btn:hover { opacity: .9; }
+
+  .modal-note {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  /* ─── SCROLL INDICATOR ─── */
+  .scroll-dot {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+  }
+
+  .sdot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+  }
+
+  .sdot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); height: 18px; border-radius: 3px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media(max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    #hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+    .hero-visual { order: -1; }
+    section { padding: 70px 24px; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .support-grid { grid-template-columns: 1fr; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .steps-grid::before { display: none; }
+    footer { padding: 32px 24px; flex-direction: column; align-items: flex-start; }
+    .scroll-dot { display: none; }
+  }
+
+  @media(max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    #hero { gap: 40px; }
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--accent3);
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 12px 24px;
+    border-radius: 100px;
+    z-index: 2000;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    font-weight: 700;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* small utility */
+  .text-accent { color: var(--accent); }
+  .text-red { color: var(--accent2); }
+  .mt-8 { margin-top: 8px; }
+  .flex-center { display: flex; align-items: center; gap: 10px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">⏱ FIT TIMER</div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#support">Support Dev</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="https://play.google.com/store" target="_blank" class="btn-primary" style="padding:10px 20px;font-size:12px;">
+    ▶ Get on Play Store
+  </a>
+</nav>
+
+<!-- SCROLL DOTS -->
+<div class="scroll-dot">
+  <button class="sdot active" onclick="scrollTo({top:0,behavior:'smooth'})"></button>
+  <button class="sdot" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})"></button>
+  <button class="sdot" onclick="document.getElementById('stats').scrollIntoView({behavior:'smooth'})"></button>
+  <button class="sdot" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})"></button>
+  <button class="sdot" onclick="document.getElementById('support').scrollIntoView({behavior:'smooth'})"></button>
+  <button class="sdot" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})"></button>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">Free on Android · No Ads · Pro Athlete Tools</div>
+    <h1>FITNESS<br><span>STOPWATCH</span><br>&amp; <span class="red">INTERVAL</span><br>TIMER</h1>
+    <p class="hero-desc">The ultimate precision companion for HIIT, Tabata, circuit training, and athletic conditioning. Built for athletes who demand zero compromise.</p>
+    <div class="hero-actions">
+      <a href="https://play.google.com/store" target="_blank" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1-1.3 1.6-.76L21 12l-16.4 8.26c-.6.54-1.6.07-1.6-.76z"/></svg>
+        Download Free
+      </a>
+      <button class="btn-outline" onclick="openDonateModal()">❤ Support Dev</button>
+    </div>
+  </div>
+
+  <!-- PHONE MOCKUP -->
+  <div class="hero-visual">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-phase-badge">🔥 WORK PHASE</div>
+          <div class="timer-ring">
+            <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+              <circle class="ring-bg" cx="70" cy="70" r="65"/>
+              <circle class="ring-fill" cx="70" cy="70" r="65"/>
+              <circle class="ring-fill-red" cx="70" cy="70" r="54"/>
+            </svg>
+            <div class="timer-digits">00:28</div>
+          </div>
+          <div class="phone-stats">
+            <div class="phone-stat">
+              <div class="phone-stat-val">4</div>
+              <div class="phone-stat-lbl">Round</div>
+            </div>
+            <div class="phone-stat">
+              <div class="phone-stat-val">8</div>
+              <div class="phone-stat-lbl">Total</div>
+            </div>
+            <div class="phone-stat">
+              <div class="phone-stat-val">56%</div>
+              <div class="phone-stat-lbl">Done</div>
+            </div>
+          </div>
+          <div class="phone-controls">
+            <div class="phone-btn phone-btn-sec">↺</div>
+            <div class="phone-btn phone-btn-main">⏸</div>
+            <div class="phone-btn phone-btn-sec">⏭</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">What's Inside</div>
+  <h2>BUILT FOR <span style="color:var(--accent)">PERFORMANCE</span></h2>
+  <div class="section-divider"></div>
+  <p style="max-width:560px;color:var(--muted);font-size:15px;line-height:1.8;margin-bottom:0">
+    Every feature is engineered around one goal: keep you in the zone and never break your flow.
+  </p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">⚙️</span>
+      <div class="feature-title">Dual-Mode Athletic Engine</div>
+      <div class="feature-desc">Switch seamlessly between structured Interval Sequences and a millisecond-accurate Precision Stopwatch with built-in lap logging — two tools in one.</div>
+      <span class="feature-tag tag-cyan">Core Engine</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🎛️</span>
+      <div class="feature-title">Interval Sequence Designer</div>
+      <div class="feature-desc">Design every phase with visual dialers — Preparation countdown, high-intensity Work Phase, low-intensity Rest Phase, and custom Reps/Cycles for any training block.</div>
+      <span class="feature-tag tag-red">Customizable</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💾</span>
+      <div class="feature-title">Smart Workout Presets</div>
+      <div class="feature-desc">Save Tabata, 5K HIIT, Strength Blocks, and any custom profile with a single tap. A safety modal prevents accidental deletion of your routines.</div>
+      <span class="feature-tag tag-green">Presets</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔊</span>
+      <div class="feature-title">Acoustic Run Cues</div>
+      <div class="feature-desc">Train eyes-off. High-frequency audio alerts fire on every phase change — Prepare, Work, Rest, Completion — so your form and focus never slip.</div>
+      <span class="feature-tag tag-cyan">Sound Assist</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🖤</span>
+      <div class="feature-title">High-Contrast Slate Theme</div>
+      <div class="feature-desc">A distraction-free visual design optimized for outdoor sunlight and dimly lit studios. Zero battery clutter — only the metrics that matter fill your screen.</div>
+      <span class="feature-tag tag-green">Visual Design</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📱</span>
+      <div class="feature-title">Mobile-First Ergonomics</div>
+      <div class="feature-desc">Edge-to-edge scaling on real smartphones with a native Android feel. Simulates a pro athletic device on large monitors too, for coaching setups.</div>
+      <span class="feature-tag tag-red">Responsive</span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div id="stats">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div><span class="stat-num">2</span> <span class="stat-unit">MODES</span></div>
+      <div class="stat-label">Interval + Stopwatch</div>
+    </div>
+    <div class="stat-item">
+      <div><span class="stat-num">∞</span></div>
+      <div class="stat-label">Saved Workout Presets</div>
+    </div>
+    <div class="stat-item">
+      <div><span class="stat-num">0</span></div>
+      <div class="stat-label">Ads. Ever.</div>
+    </div>
+    <div class="stat-item">
+      <div><span class="stat-num">ms</span></div>
+      <div class="stat-label">Millisecond Accuracy</div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label">Get Started</div>
+  <h2>THREE STEPS TO <span style="color:var(--accent)">YOUR ZONE</span></h2>
+  <div class="section-divider"></div>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-title">Download Free</div>
+      <div class="step-desc">Install from the Google Play Store in seconds. No account required, no paywalls, no subscriptions.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-title">Design Your Session</div>
+      <div class="step-desc">Use the visual dialer to configure your prep time, work phase, rest phase, and reps. Save it as a preset for next time.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-title">Train & Conquer</div>
+      <div class="step-desc">Start the sequence. Audio cues keep you locked in. Track laps, monitor your progress ring, and crush your personal records.</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:60px">
+    <a href="https://play.google.com/store" target="_blank" class="btn-primary" style="font-size:16px;padding:18px 40px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1-1.3 1.6-.76L21 12l-16.4 8.26c-.6.54-1.6.07-1.6-.76z"/></svg>
+      Install on Android — It's Free
+    </a>
+  </div>
+</section>
+
+<!-- SUPPORT / DONATE -->
+<section id="support">
+  <div class="section-label">Support the Developer</div>
+  <h2>FUEL THE <span style="color:var(--accent2)">NEXT UPDATE</span></h2>
+  <div class="section-divider"></div>
+  <p style="max-width:540px;color:var(--muted);font-size:15px;line-height:1.8">
+    This app is built solo with love by one developer. If it's helped your training, consider showing some appreciation — every contribution directly funds new features.
+  </p>
+
+  <div class="support-grid">
+    <!-- RAZORPAY -->
+    <div class="support-card">
+      <div class="support-card-glow" style="background:rgba(51,149,255,.12)"></div>
+      <span class="support-icon">💳</span>
+      <div class="support-title" style="color:var(--accent)">International<br>Donation</div>
+      <div class="support-desc">Pay securely from anywhere in the world using cards, net banking, wallets, and more via Razorpay — India's most trusted payment gateway.</div>
+      <a href="https://razorpay.me/@anuragpremsoni" target="_blank" class="btn-primary" style="display:inline-flex;background:#3395ff;box-shadow:0 0 30px rgba(51,149,255,.25)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Donate via Razorpay
+      </a>
+      <p class="modal-note" style="text-align:left;margin-top:14px">Supports cards, UPI, net banking, wallets &amp; EMI</p>
+    </div>
+
+    <!-- UPI -->
+    <div class="support-card">
+      <div class="support-card-glow" style="background:rgba(184,255,87,.08)"></div>
+      <span class="support-icon">📲</span>
+      <div class="support-title" style="color:var(--accent3)">UPI Payment<br>(India)</div>
+      <div class="support-desc">Quick &amp; instant transfers for Indian supporters. Use any UPI app — GPay, PhonePe, Paytm, BHIM — with the ID below or scan the QR code.</div>
+
+      <div class="upi-block">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Barlow Condensed',sans-serif;margin-bottom:4px">UPI ID</div>
+          <div class="upi-id">developeranurag@naviaxis</div>
+        </div>
+        <button class="upi-copy" onclick="copyUPI()">Copy</button>
+      </div>
+
+      <div class="qr-wrap">
+        <div class="qr-box">
+          <!-- Auto-generated QR pattern (decorative) -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#000">
+            <rect x="5" y="5" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="12" y="12" width="21" height="21"/>
+            <rect x="60" y="5" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="67" y="12" width="21" height="21"/>
+            <rect x="5" y="60" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="12" y="67" width="21" height="21"/>
+            <rect x="60" y="60" width="8" height="8"/>
+            <rect x="72" y="60" width="8" height="8"/>
+            <rect x="84" y="60" width="11" height="8"/>
+            <rect x="60" y="72" width="14" height="8"/>
+            <rect x="78" y="72" width="17" height="8"/>
+            <rect x="60" y="84" width="8" height="11"/>
+            <rect x="72" y="84" width="14" height="11"/>
+            <rect x="44" y="5" width="8" height="8"/>
+            <rect x="44" y="17" width="8" height="8"/>
+            <rect x="44" y="29" width="8" height="8"/>
+            <rect x="5" y="44" width="8" height="8"/>
+            <rect x="17" y="44" width="14" height="8"/>
+            <rect x="35" y="44" width="8" height="8"/>
+            <rect x="48" y="44" width="8" height="8"/>
+            <rect x="60" y="44" width="8" height="8"/>
+            <rect x="72" y="44" width="8" height="8"/>
+            <rect x="84" y="44" width="11" height="8"/>
+          </svg>
+        </div>
+        <div class="qr-text">
+          <h4>Scan &amp; Pay</h4>
+          <p>Open any UPI app, tap "Scan QR" and point your camera here for instant payment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label">Get in Touch</div>
+  <h2>WE'RE <span style="color:var(--accent)">LISTENING</span></h2>
+  <div class="section-divider"></div>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <h3>Questions, bugs,<br>or wild ideas?</h3>
+      <p>Feature requests and feedback are what drive development forward. Whether you've found a bug, need support, or have an idea that'll make your training better — reach out directly.</p>
+      <a href="mailto:developeranurag2108@gmail.com" class="contact-email">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+        developeranurag2108@gmail.com
+      </a>
+      <div style="margin-top:28px;padding:20px 24px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Typical Response Time</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent3);letter-spacing:2px">24–48 HRS</div>
+      </div>
+    </div>
+
+    <div class="contact-form-wrap">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:24px">Send a Message</div>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="f-name" placeholder="Please Enter Name"/>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="f-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="f-type">
+          <option>Feature Request</option>
+          <option>Bug Report</option>
+          <option>General Support</option>
+          <option>Partnership / Press</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="f-msg" rows="4" placeholder="Tell us what's on your mind..."></textarea>
+      </div>
+      <button class="form-submit" onclick="submitForm()">Send Message →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">⏱ FIT TIMER</div>
+  <div class="footer-text">© 2025 Anurag Premsoni · Built with 💪 for athletes everywhere</div>
+  <ul class="footer-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#support">Donate</a></li>
+    <li><a href="mailto:developeranurag2108@gmail.com">Contact</a></li>
+    <li><a href="https://play.google.com/store" target="_blank">Play Store</a></li>
+  </ul>
+</footer>
+
+<!-- DONATE MODAL -->
+<div class="modal-overlay" id="donateModal" onclick="closeDonateModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeDonateModal()">✕</button>
+    <h3>SUPPORT<br><span style="color:var(--accent)">DEVELOPMENT</span></h3>
+    <p>Choose your preferred payment method. Every contribution helps keep the app free for everyone.</p>
+
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('razorpay')">💳 International</button>
+      <button class="modal-tab" onclick="switchTab('upi')">📲 UPI (India)</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-razorpay">
+      <a href="https://razorpay.me/@anuragpremsoni" target="_blank" class="razorpay-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Donate via Razorpay
+      </a>
+      <div class="modal-note">Secure · Supports 100+ payment methods · No account needed</div>
+    </div>
+
+    <div class="tab-panel" id="tab-upi">
+      <div class="upi-block" style="margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Barlow Condensed',sans-serif;margin-bottom:4px">UPI ID</div>
+          <div class="upi-id">developeranurag@naviaxis</div>
+        </div>
+        <button class="upi-copy" onclick="copyUPI()">Copy</button>
+      </div>
+      <div class="qr-wrap">
+        <div class="qr-box">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#000">
+            <rect x="5" y="5" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="12" y="12" width="21" height="21"/>
+            <rect x="60" y="5" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="67" y="12" width="21" height="21"/>
+            <rect x="5" y="60" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="12" y="67" width="21" height="21"/>
+            <rect x="60" y="60" width="8" height="8"/><rect x="72" y="60" width="8" height="8"/>
+            <rect x="84" y="60" width="11" height="8"/><rect x="60" y="72" width="14" height="8"/>
+            <rect x="78" y="72" width="17" height="8"/><rect x="60" y="84" width="8" height="11"/>
+            <rect x="72" y="84" width="14" height="11"/>
+          </svg>
+        </div>
+        <div class="qr-text">
+          <h4>Scan to Pay</h4>
+          <p>GPay, PhonePe, Paytm, or any BHIM UPI app</p>
+        </div>
+      </div>
+      <div class="modal-note" style="margin-top:12px">Instant transfer · Works with all UPI apps</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+  // ── MODAL ──
+  function openDonateModal() {
+    document.getElementById('donateModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDonateModal(e) {
+    if (!e || e.target === document.getElementById('donateModal') || e.currentTarget.classList.contains('modal-close')) {
+      document.getElementById('donateModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // ── TABS ──
+  function switchTab(tab) {
+    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    const tabs = document.querySelectorAll('.modal-tab');
+    if (tab === 'razorpay') tabs[0].classList.add('active');
+    else tabs[1].classList.add('active');
+  }
+
+  // ── UPI COPY ──
+  function copyUPI() {
+    navigator.clipboard.writeText('developeranurag@naviaxis').then(() => {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    });
+  }
+
+  // ── CONTACT FORM ──
+  function submitForm() {
+    const name = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const type = document.getElementById('f-type').value;
+    const msg = document.getElementById('f-msg').value.trim();
+    if (!name || !email || !msg) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    const subject = encodeURIComponent('[FitTimer] ' + type + ' from ' + name);
+    const body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nType: ' + type + '\n\n' + msg);
+    window.location.href = 'mailto:developeranurag2108@gmail.com?subject=' + subject + '&body=' + body;
+  }
+
+  // ── SCROLL DOTS ──
+  const sections = ['hero','features','stats','how','support','contact'];
+  const dots = document.querySelectorAll('.sdot');
+
+  function updateDots() {
+    const scrollY = window.scrollY + window.innerHeight / 2;
+    sections.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const top = el.offsetTop;
+      const bottom = top + el.offsetHeight;
+      if (scrollY >= top && scrollY < bottom) {
+        dots.forEach(d => d.classList.remove('active'));
+        if (dots[i]) dots[i].classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateDots, { passive: true });
+
+  // ── SCROLL REVEAL ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .step-card, .support-card, .stat-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
