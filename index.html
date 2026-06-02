@@ -817,7 +817,30 @@
     cursor: pointer;
     transition: opacity .2s, transform .2s;
   }
-  .form-submit:hover { opacity: .9; transform: translateY(-1px); }
+  .form-submit:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+  .form-submit:disabled { cursor: not-allowed; }
+
+  #f-screenshot {
+    padding: 12px 16px !important;
+    background: var(--bg) !important;
+    border: 1px dashed var(--border) !important;
+    border-radius: 8px !important;
+    color: var(--text) !important;
+    font-family: 'Barlow', sans-serif !important;
+    font-size: 14px !important;
+    transition: border-color .2s !important;
+  }
+  #f-screenshot:hover { border-color: var(--accent) !important; }
+  #f-screenshot::file-selector-button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 8px;
+  }
 
   /* ─── FOOTER ─── */
   footer {
@@ -1315,10 +1338,17 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Message</label>
+        <label>Message <span style="font-size:12px;color:var(--muted)">(min. 20 characters)</span></label>
         <textarea id="f-msg" rows="4" placeholder="Tell us what's on your mind..."></textarea>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px"><span id="char-count">0</span>/20</div>
       </div>
-      <button class="form-submit" onclick="submitForm()">Send Message →</button>
+      <div class="form-group">
+        <label>Screenshot <span style="font-size:12px;color:var(--muted)">(optional)</span></label>
+        <input type="file" id="f-screenshot" accept="image/*" style="padding:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;"/>
+        <div id="screenshot-preview" style="margin-top:12px;max-width:100%;"></div>
+      </div>
+      <button class="form-submit" id="submit-btn" onclick="submitForm()" disabled style="opacity:0.5;cursor:not-allowed;">Send Message →</button>
+      <div id="form-status" style="margin-top:12px;font-size:13px;text-align:center;"></div>
     </div>
   </div>
 </section>
@@ -1434,19 +1464,175 @@
     });
   }
 
-  // ── CONTACT FORM ──
-  function submitForm() {
+  // ── EMAIL JS SETUP & FORM VALIDATION ──
+  // Initialize EmailJS (replace with your actual Service ID, Template ID, and Public Key from emailjs.com)
+  const EMAILJS_SERVICE_ID = 'service_jab97li';
+  const EMAILJS_TEMPLATE_ID = 'template_3439ah4';
+  const EMAILJS_PUBLIC_KEY = 'UgBXQ0VWvb2HSEL7_'; // Get from https://www.emailjs.com
+  
+  // Load EmailJS library
+  (function() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/index.min.js';
+    script.onload = function() {
+      if (window.emailjs) {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+      }
+    };
+    document.head.appendChild(script);
+  })();
+
+  // Generate incident number (format: INC-YYYYMMDD-XXXXXX where X is random)
+  function generateIncidentNumber() {
+    const date = new Date();
+    const dateStr = date.getFullYear().toString() + 
+                   (date.getMonth() + 1).toString().padStart(2, '0') + 
+                   date.getDate().toString().padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `INC-${dateStr}-${random}`;
+  }
+
+  // Email validation regex
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Form validation function
+  function validateForm() {
+    const name = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const msg = document.getElementById('f-msg').value.trim();
+    
+    const isNameValid = name.length > 0;
+    const isEmailValid = isValidEmail(email);
+    const isMessageValid = msg.length >= 20;
+    
+    return isNameValid && isEmailValid && isMessageValid;
+  }
+
+  // Update button state
+  function updateButtonState() {
+    const btn = document.getElementById('submit-btn');
+    const isValid = validateForm();
+    
+    if (isValid) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  // Add real-time validation listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('f-name');
+    const emailInput = document.getElementById('f-email');
+    const msgInput = document.getElementById('f-msg');
+    
+    nameInput.addEventListener('input', updateButtonState);
+    emailInput.addEventListener('input', updateButtonState);
+    msgInput.addEventListener('input', function() {
+      document.getElementById('char-count').textContent = this.value.length;
+      updateButtonState();
+    });
+    
+    // Screenshot preview
+    document.getElementById('f-screenshot').addEventListener('change', function(e) {
+      const preview = document.getElementById('screenshot-preview');
+      preview.innerHTML = '';
+      
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.style.maxWidth = '100%';
+          img.style.borderRadius = '4px';
+          img.style.marginTop = '8px';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  });
+
+  // ── CONTACT FORM SUBMISSION ──
+  async function submitForm() {
+    const submitBtn = document.getElementById('submit-btn');
+    const formStatus = document.getElementById('form-status');
+    
+    // Validate
     const name = document.getElementById('f-name').value.trim();
     const email = document.getElementById('f-email').value.trim();
     const type = document.getElementById('f-type').value;
     const msg = document.getElementById('f-msg').value.trim();
-    if (!name || !email || !msg) {
-      alert('Please fill in all required fields.');
+    
+    if (!validateForm()) {
+      formStatus.innerHTML = '<span style="color:var(--accent2)">Please fill all fields correctly (message min. 20 chars).</span>';
       return;
     }
-    const subject = encodeURIComponent('[FitTimer] ' + type + ' from ' + name);
-    const body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nType: ' + type + '\n\n' + msg);
-    window.location.href = 'mailto:developeranurag2108@gmail.com?subject=' + subject + '&body=' + body;
+    
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.7';
+    formStatus.innerHTML = '<span style="color:var(--accent)">Sending...</span>';
+    
+    try {
+      const incidentNumber = generateIncidentNumber();
+      
+      // Prepare email data
+      const emailData = {
+        to_email: 'developeranurag2108@gmail.com',
+        from_name: name,
+        from_email: email,
+        message_type: type,
+        message_body: msg,
+        incident_number: incidentNumber,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      // Try to send with EmailJS (backend solution)
+      if (window.emailjs) {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, emailData);
+        formStatus.innerHTML = `<span style="color:var(--accent3)">✓ Message sent! Incident #: <strong>${incidentNumber}</strong><br>We'll respond within 24-48 hours.</span>`;
+      } else {
+        // Fallback: Use formspree or fetch API if EmailJS not available
+        await fetch('https://formspree.io/f/xyzabc', { // Replace with your Formspree form ID
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, email, type, message: msg, incident: incidentNumber
+          })
+        });
+        formStatus.innerHTML = `<span style="color:var(--accent3)">✓ Message sent! Incident #: <strong>${incidentNumber}</strong><br>We'll respond within 24-48 hours.</span>`;
+      }
+      
+      // Clear form
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-email').value = '';
+      document.getElementById('f-msg').value = '';
+      document.getElementById('f-screenshot').value = '';
+      document.getElementById('screenshot-preview').innerHTML = '';
+      document.getElementById('char-count').textContent = '0';
+      
+      // Reset button
+      setTimeout(() => {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        formStatus.innerHTML = '';
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      formStatus.innerHTML = `<span style="color:var(--accent2)">Error sending message. Please try again or email us directly at developeranurag2108@gmail.com</span>`;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
+    
+    updateButtonState();
   }
 
   // ── SCROLL DOTS ──
