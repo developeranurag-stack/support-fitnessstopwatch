@@ -859,6 +859,18 @@
   }
   .footer-links a:hover { color: var(--accent); }
 
+  .footer-visits {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .visit-icon { font-size: 14px; }
+  #visit-count { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .visit-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
   /* ─── DONATION MODAL ─── */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -1315,6 +1327,11 @@
 <footer>
   <div class="footer-logo">⏱ FITNESS STOPWATCH</div>
   <div class="footer-text">© 2025 Anurag Prem Soni · Built with 💪 for athletes everywhere</div>
+  <div class="footer-visits">
+    <span class="visit-icon">👁</span>
+    <span id="visit-count">—</span>
+    <span class="visit-label">visits</span>
+  </div>
   <ul class="footer-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#support">Donate</a></li>
@@ -1468,6 +1485,39 @@
     el.style.transition = 'opacity .5s ease, transform .5s ease';
     observer.observe(el);
   });
+
+   // ── PAGE VISIT COUNTER ──
+  // Uses localStorage — counts unique visits per browser session.
+  // Data is stored locally in each visitor's browser.
+  // For a shared/global counter across all visitors, replace with
+  // a backend service (e.g. Firebase, Supabase, or CountAPI).
+  (function() {
+    const STORAGE_KEY = 'fittimer_visit_count';
+    const SESSION_KEY = 'fittimer_visited_this_session';
+ 
+    // Only count once per browser session (tab open = 1 visit)
+    let count = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    if (!sessionStorage.getItem(SESSION_KEY)) {
+      count += 1;
+      localStorage.setItem(STORAGE_KEY, count);
+      sessionStorage.setItem(SESSION_KEY, '1');
+    }
+ 
+    // Animate the number counting up
+    const el = document.getElementById('visit-count');
+    if (!el) return;
+    const duration = 1200;
+    const start = performance.now();
+    const from = Math.max(0, count - Math.min(count, 80));
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(from + (count - from) * ease).toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+      else el.textContent = count.toLocaleString();
+    }
+    requestAnimationFrame(tick);
+  })();
 </script>
 </body>
 </html>
